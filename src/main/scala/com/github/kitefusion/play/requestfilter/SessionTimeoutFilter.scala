@@ -20,7 +20,7 @@ class SessionTimeoutFilter @Inject()(implicit override val mat: Materializer, ex
 	/**
 	 * session time out in seconds how long the session is active
 	 */
-	val sessionLifeTime: Int = 60 * configuration.getInt("play.security.filter.lifeTime").get
+	val sessionLifeTime: Int = 60 * configuration.getInt("kitefusion.play.security.filter.lifeTime").get
 
 	/**
 	 * apply method which checks for the session lifetime
