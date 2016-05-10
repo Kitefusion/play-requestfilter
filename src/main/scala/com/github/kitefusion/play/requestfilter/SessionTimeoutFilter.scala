@@ -20,7 +20,17 @@ class SessionTimeoutFilter @Inject()(implicit override val mat: Materializer, ex
 	/**
 	 * session time out in seconds how long the session is active
 	 */
-	val sessionLifeTime: Int = 60 * configuration.getInt("kitefusion.play.security.filter.lifeTime").get
+	val sessionLifeTime: Int = 60 * configuration.getInt("kitefusion.play.filter.sessionTimeOut.lifeTime").get
+
+	/**
+	 * key of logged in user to determine whether the session have to expire on timeout
+	 */
+	val sessionUsernameKey: String = configuration.getString("kitefusion.play.filter.sessionTimeOut.username").get
+
+	/**
+	 * name of the timestamp key in the session
+	 */
+	val lifeTimeKey: String = "slt"
 
 	/**
 	 * apply method which checks for the session lifetime
@@ -33,9 +43,9 @@ class SessionTimeoutFilter @Inject()(implicit override val mat: Materializer, ex
 
 		val oldSessionTime = (System.currentTimeMillis / 1000) - sessionLifeTime
 
-		requestHeader.session.get("timestamp") match {
+		requestHeader.session.get(lifeTimeKey) match {
 
-			case Some(value) if value.toInt < oldSessionTime && requestHeader.session.get("username").isDefined =>
+			case Some(value) if value.toInt < oldSessionTime && requestHeader.session.get(sessionUsernameKey).isDefined =>
 
 				Future successful Redirect(requestHeader.uri).withNewSession
 			case _ => continue(nextFilter)(requestHeader)
@@ -53,8 +63,7 @@ class SessionTimeoutFilter @Inject()(implicit override val mat: Materializer, ex
 
 		nextFilter(requestHeader).map { result =>
 
-			val newTimestamp = (System.currentTimeMillis / 1000) + sessionLifeTime
-			result.addingToSession("timestamp" -> newTimestamp.toString)(requestHeader)
+			result.addingToSession(lifeTimeKey -> (System.currentTimeMillis / 1000).toString)(requestHeader)
 		}
 	}
 }
