@@ -28,9 +28,15 @@ class SessionTimeoutFilter @Inject()(implicit override val mat: Materializer, ex
 	val sessionUsernameKey: String = configuration.getString("kitefusion.play.filter.sessionTimeOut.username").get
 
 	/**
+	 * uri where the user should be redirected when session is timed out
+	 * if empty the user will be redirected to the same uri he requested
+	 */
+	val redirectUri: Option[String] = configuration.getString("kitefusion.play.filter.sessionTimeOut.redirectUri")
+
+	/**
 	 * name of the timestamp key in the session
 	 */
-	val lifeTimeKey: String = "slt"
+	val lifeTimeKey: String = configuration.getString("kitefusion.play.filter.sessionTimeOut.sessionKeyName").get
 
 	/**
 	 * apply method which checks for the session lifetime
@@ -47,7 +53,7 @@ class SessionTimeoutFilter @Inject()(implicit override val mat: Materializer, ex
 
 			case Some(value) if value.toInt < oldSessionTime && requestHeader.session.get(sessionUsernameKey).isDefined =>
 
-				Future successful Redirect(requestHeader.uri).withNewSession
+				Future successful Redirect(redirectUri.getOrElse(requestHeader.uri)).withNewSession
 			case _ => continue(nextFilter)(requestHeader)
 		}
 	}
@@ -59,7 +65,7 @@ class SessionTimeoutFilter @Inject()(implicit override val mat: Materializer, ex
 	 * @param requestHeader request header which contains the session
 	 * @return
 	 */
-	def continue(nextFilter: RequestHeader => Future[Result]) (requestHeader: RequestHeader) = {
+	protected def continue(nextFilter: RequestHeader => Future[Result]) (requestHeader: RequestHeader) = {
 
 		nextFilter(requestHeader).map { result =>
 
