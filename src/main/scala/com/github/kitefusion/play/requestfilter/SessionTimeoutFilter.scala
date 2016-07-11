@@ -25,7 +25,7 @@ class SessionTimeoutFilter @Inject()(implicit override val mat: Materializer, ex
 	/**
 	 * key of logged in user to determine whether the session have to expire on timeout
 	 */
-	val sessionUsernameKey: String = configuration.getString("kitefusion.play.filter.sessionTimeOut.username").get
+	val sessionUsernameKey: String = configuration.getString("kitefusion.play.filter.sessionTimeOut.usernameKey").get
 
 	/**
 	 * uri where the user should be redirected when session is timed out
